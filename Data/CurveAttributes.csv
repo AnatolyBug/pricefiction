@@ -1,0 +1,4 @@
+Name,Type,LH,Interpolation,Extrapolation
+GOOG,Stock,10,,
+USD,YieldCurve,10,,
+VIX,ImpVol,20,,
