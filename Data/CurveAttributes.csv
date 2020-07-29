@@ -1,4 +1,4 @@
-Name,Type,LH,Interpolation,Extrapolation
-GOOG,Stock,10,,
-USD,YieldCurve,10,,
-VIX,ImpVol,20,,
+Name,Type,LH,Interpolation,Extrapolation,Compounding,DayCountConvention
+GOOG,Stock,10,,,,
+USD,YieldCurve,10,,,Continuous,
+VIX,ImpVol,20,,,,

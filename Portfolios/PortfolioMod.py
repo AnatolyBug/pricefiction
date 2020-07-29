@@ -1,4 +1,5 @@
 from Instruments import *
+from copy import copy, deepcopy
 
 class Portfolio():
 
@@ -9,10 +10,10 @@ class Portfolio():
         self.products = list(args)
         Portfolio.number_of_portfolios += 1
 
-    def mtm(self, t, scenario=None, md=None, pr_md=None):
+    def mtm(self, t, scenario=None, md=None, pr_md=None, interm=False):
         mtm = 0
         for product in self.products:
-            mtm += product.price(t,scenario=scenario,md=md, pr_md=pr_md)
+            mtm += product.price(t,scenario=scenario,md=md, pr_md=pr_md, interm=interm)
         return mtm
 
     def delta(self, t, scenario=None, md=None, pr_md=None):
@@ -30,6 +31,17 @@ class Portfolio():
     def add_product(self,product):
         print(self.name, ' added', str(product))
         self.products.append(product)
+
+    def age_by_bd(self,x):
+        _prod_copy = deepcopy(self.products)
+        for prod in _prod_copy:
+            if 'age_by_bd' in dir(prod):
+                prod.age_by_bd(x)
+            else:
+                continue
+
+        return Portfolio(_prod_copy, self.name+'aged by '+str(x))
+
 
     def __repr__(self):
         return 'Portfolio' + self.name

@@ -3,6 +3,9 @@ from datetime import datetime
 from MarketData import *
 from Portfolios import *
 from Instruments import *
+import matplotlib.pyplot as plt
+import statsmodels.api as sm
+import pylab
 
 class IMAESAlt:
     def __init__(self, request):
@@ -24,6 +27,8 @@ class IMAESAlt:
         sim_join = md_ex.simulate({'GOOG':10,'USD':10, 'VIX':20})
         md_ex_sim = HistoricalMarketData(sim_join, t, ca)
         scen_dts = pd.Series(md_ex_sim.md['Date'].unique())
+        #a = md_ex_sim.md[md_ex_sim.md['Name']=='VIX']
+        #aa = md_ex_sim.md[md_ex_sim.md['Name'] == 'GOOG']
 
         np.random.seed(4567)
         rand = np.random.randint(len(scen_dts), size=scenarios)
@@ -50,5 +55,14 @@ class IMAESAlt:
         all_res_lh['VaR_975'] = pd.Series([var_975])
         all_res_lh['ES'] = pd.Series([es])
         all_res = all_res.append(all_res_lh, ignore_index=True)
-        all_res.to_csv(r'Results\IMAAlt.csv', index=False)
+        if self.request['ExportToCSV']:
+            all_res.to_csv(r'Results\IMAAlt.csv', index=False)
+        if self.request['ShowPlots']:
+            ret1 = all_res['Return'].dropna()
+            f = plt.figure(1)
+            plt.hist(ret1, color='blue', edgecolor='black',
+                     bins=20, density=True, figure=f)
+            sm.qqplot(ret1, line='s')
+            pylab.show()
+            plt.show()
         pass

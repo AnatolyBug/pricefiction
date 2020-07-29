@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from Helpers.HelpersMod import lin_interp, cols_to_int
+from Helpers.HelpersMod import lin_interp, cols_to_int, TTM
 
 class HistoricalMarketData:
     def __init__(self, md, t, curve_att=None):
@@ -10,7 +10,7 @@ class HistoricalMarketData:
         self.ca = curve_att
         self.simulations = {}
 
-    def simulate(self, riskfactors, base_dt=None, intersection=True, drop=False, overlap=False):
+    def simulate(self, riskfactors, base_dt=None, intersection=True, drop=True, overlap=False):
         if base_dt is None:
             base_dt = self.t
 
@@ -43,7 +43,6 @@ class HistoricalMarketData:
 
 
         for md_mini in dfs_rfs:
-            #md_mini = md_mini[md_mini['Date'].isin(common_dates)]
             name = md_mini['Name'].iloc[0]
             type = self.ca[self.ca['Name']==name]['Type'].iloc[0]
             base_scenario = md_mini[md_mini['Date'] == base_dt]
@@ -89,6 +88,18 @@ class HistoricalMarketData:
 
         sim = pd.concat(dfs)
         sim.reset_index(inplace=True)
+
+        if intersection:
+            a=set(riskfactors.values())
+            if len(set(riskfactors.values())) > 1:
+                common_dates2 = common_dates.copy()
+                for name in sim['Name'].unique():
+                    md_mini = sim[sim['Name'] == name]
+                    common_dates2 = common_dates2[common_dates2.isin(md_mini['Date'])]
+
+                sim = sim[sim['Date'].isin(common_dates2)]
+
+
         if dfs_other:
             non_sim = pd.concat(dfs_other)
             if intersection:
@@ -99,7 +110,7 @@ class HistoricalMarketData:
         return sim
 
     def md_query(self, scen_dt, dtm=None,**kwargs):
-        print(scen_dt)
+        #print(scen_dt)
         scen_dt_df = pd.DataFrame(scen_dt,columns=['Date'])
         scenario_df = pd.merge(scen_dt_df,self.md,on=['Date'],how='left')
         d = pd.DataFrame()
@@ -127,3 +138,11 @@ class HistoricalMarketData:
             else:
                 num_col.append(col)
         return lin_interp(dtm, scenario[num_col])
+
+    def DF(self,t,M,CCY,sc):
+        ttm = TTM(t, M)
+        df_r = self.md_query(sc,dtm=ttm.d,R=CCY)
+        comp = self.ca[self.ca['Name']==CCY]['Compounding'].iloc[0]
+        if comp == 'Continuous':
+            return np.exp(-df_r['R']*ttm.y)
+

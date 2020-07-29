@@ -8,8 +8,8 @@ class IMAESHedge:
         self.request = request
 
     def run(self):
-        K = 1349.59
-        M = datetime.strptime('20/12/2020', '%d/%m/%Y')
+        #K = 1349.59
+        #M = datetime.strptime('20/12/2020', '%d/%m/%Y')
 
         scenarios = int(self.request['Scenarios'])
         t = datetime.strptime(self.request['ValuationDate'], '%d/%m/%Y')
@@ -18,11 +18,11 @@ class IMAESHedge:
         ca = pd.read_csv(self.request['CurveAttributes'])
         md_ex = HistoricalMarketData(md, t, ca)
 
-        opt = EQEuropeanCallOption('GOOG',K,M,'USD','VIX')
-        s = Stock('GOOG', n=-0.57312)
-        a = opt.delta(t,scenario=pd.Series(t), md=md_ex)
-        pt = Portfolio([opt,s])
-        aa= pt.delta(t,scenario=pd.Series(t), md=md_ex)
+        # = EQEuropeanCallOption('GOOG',K,M,'USD','VIX')
+        #s = Stock('GOOG', n=-0.57312)
+        #a = opt.delta(t,scenario=pd.Series(t), md=md_ex)
+        #pt = Portfolio([opt,s])
+        #aa= pt.delta(t,scenario=pd.Series(t), md=md_ex)
 
         portfolios = []
         for i in range(0,scenarios):
@@ -44,9 +44,9 @@ class IMAESHedge:
         rand_df = pd.DataFrame(rand, columns=['Scenario'])
         rand_scen_df = pd.merge(rand_df, md_ex_sim.md, left_on=['Scenario'], right_index=True, how='left')
         port_pr = portfolios[0].mtm(t, scenario=rand_scen_df['Date'], md=md_ex_sim)
-        port_dlt = portfolios[0].rho(t, scenario=rand_scen_df['Date'], md=md_ex_sim)
-        port_rho = portfolios[0].delta(t, scenario=rand_scen_df['Date'], md=md_ex_sim)
-        returns = port_pr - base_prices
+        port_dlt_1 = portfolios[0].rho(t, scenario=rand_scen_df['Date'], md=md_ex_sim)
+        port_rho_1 = portfolios[0].delta(t, scenario=rand_scen_df['Date'], md=md_ex_sim)
+        returns_1 = port_pr - base_prices
         '''
         rand_dates = rand_scen_df['Date']
         port_pr_1 = []

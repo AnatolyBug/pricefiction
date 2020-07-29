@@ -1,6 +1,7 @@
 from scipy.stats import norm
 import numpy as np
 import pandas as pd
+from pandas.tseries.offsets import BDay
 from Helpers.HelpersMod import TTM
 from datetime import datetime
 from math import pi
@@ -15,6 +16,7 @@ class EuropeanEQOption:
         self.CCY = ccy
         self.VOL= vol
         self.DIV = div
+        self.interm_res = []
 
 
 
@@ -37,10 +39,10 @@ class EuropeanEQOption:
         return np.exp((-x**2)/2)/np.sqrt(2*pi)
 
     def vega(self, t=None, scenario=None, md=None, pr_md=None):
-        sc = t if scenario is None else scenario
+        sc = pd.Series(t) if scenario is None else scenario
         ttm = TTM(t, self.M)
         pm = md.md_query(sc, ttm.d, R=self.CCY, S=self.U, q=self.DIV, v=self.VOL) if pr_md is None else pr_md
-        return self.N*pm['S']*exp(-pm['q']*ttm.y)*sqrt(ttm.y)*self.phi(self.d1(t, sc, pr_md=pm))
+        return self.N*pm['S']*np.exp(-pm['q']*ttm.y)*np.sqrt(ttm.y)*self.phi(self.d1(t, sc, pr_md=pm))
 
     def d1(self, t, scenario=None, md=None, pr_md=None):
         sc = pd.Series(t) if scenario is None else scenario
@@ -54,21 +56,37 @@ class EuropeanEQOption:
         pm = md.md_query(sc, ttm.d, R=self.CCY, S=self.U, q=self.DIV, v=self.VOL) if pr_md is None else pr_md
         return self.d1(t, sc, pr_md=pm) - pm['v'] * np.sqrt(ttm.y)
 
+    def age_by_bd(self, x):
+        new_M = self.M - BDay(x)
+        self.M = new_M.to_datetime()
+
 class EQEuropeanCallOption(EuropeanEQOption):
-    def price(self, t, scenario=None, md=None, pr_md=None):
-        sc = t if scenario is None else scenario
+    def price(self, t, scenario=None, md=None, pr_md=None,interm=False):
+        sc = pd.Series(t) if scenario is None else scenario
         ttm = TTM(t, self.M)
         pm = md.md_query(sc, ttm.d, R=self.CCY, S=self.U, q=self.DIV, v=self.VOL) if pr_md is None else pr_md
-        return self.N*pm['S']*np.exp(-pm['q']*ttm.y)*norm.cdf(self.d1(t,pr_md=pm)) - self.N*self.K*np.exp(-pm['R']*ttm.y)*norm.cdf(self.d2(t,pr_md=pm))
+        d1 = self.d1(t, pr_md=pm)
+        d2 = self.d2(t, pr_md=pm)
+        p = self.N*pm['S']*np.exp(-pm['q']*ttm.y)*norm.cdf(d1) - self.N*self.K*np.exp(-pm['R']*ttm.y)*norm.cdf(d2)
+        if interm:
+            pm['Scenario'] = sc
+            pm['ValuationDate'] = t
+            pm['TTM_d']=ttm.d
+            pm['TTM_y'] = ttm.y
+            pm['d1']=d1
+            pm['d2']=d2
+            pm['MTM']=p
+            self.interm_res.append(pm)
+        return p
 
     def delta(self, t, scenario=None, md=None, pr_md=None):
-        sc = t if scenario is None else scenario
+        sc = pd.Series(t) if scenario is None else scenario
         ttm = TTM(t, self.M)
         pm = md.md_query(sc, ttm.d, R=self.CCY, S=self.U, q=self.DIV, v=self.VOL) if pr_md is None else pr_md
         return self.N*np.exp(-pm['q']*ttm.y)*norm.cdf(self.d1(t,pr_md=pm))
 
     def rho(self, t, scenario=None, md=None, pr_md=None):
-        sc = t if scenario is None else scenario
+        sc = pd.Series(t) if scenario is None else scenario
         ttm = TTM(t, self.M)
         pm = md.md_query(sc, ttm.d, R=self.CCY, S=self.U, q=self.DIV, v=self.VOL) if pr_md is None else pr_md
         return self.N*self.K*ttm.y*np.exp(-pm['R']*ttm.y)*norm.cdf(self.d2(t,pr_md=pm))
@@ -79,22 +97,22 @@ class EQEuropeanCallOption(EuropeanEQOption):
 class EQEuropeanPutOption(EuropeanEQOption):
 
     def price(self, t, scenario=None, md=None, pr_md=None):
-        sc = t if scenario is None else scenario
+        sc = pd.Series(t) if scenario is None else scenario
         ttm = TTM(t, self.M)
         pm = md.md_query(sc, ttm.d, R=self.CCY, S=self.U, q=self.DIV, v=self.VOL) if pr_md is None else pr_md
-        return self.N*self.K*exp(-pm['R']*ttm.y)*norm.cdf(-self.d2(t,pr_md=pm)) - self.N*pm['S']*exp(-pm['q']*ttm.y)*norm.cdf(-self.d1(t,pr_md=pm))
+        return self.N*self.K*np.exp(-pm['R']*ttm.y)*norm.cdf(-self.d2(t,pr_md=pm)) - self.N*pm['S']*np.exp(-pm['q']*ttm.y)*norm.cdf(-self.d1(t,pr_md=pm))
 
     def delta(self, t, scenario=None, md=None, pr_md=None):
-        sc = t if scenario is None else scenario
+        sc = pd.Series(t) if scenario is None else scenario
         ttm = TTM(t, self.M)
         pm = md.md_query(sc, ttm.d, R=self.CCY, S=self.U, q=self.DIV, v=self.VOL) if pr_md is None else pr_md
-        return -self.N*exp(-pm['q']*ttm.y)*norm.cdf(-self.d1(t,pr_md=pm))
+        return -self.N*np.exp(-pm['q']*ttm.y)*norm.cdf(-self.d1(t,pr_md=pm))
 
     def rho(self, t, scenario=None, md=None, pr_md=None):
         sc = t if scenario is None else scenario
         ttm = TTM(t, self.M)
         pm = md.md_query(sc, ttm.d, R=self.CCY, S=self.U, q=self.DIV, v=self.VOL) if pr_md is None else pr_md
-        return self.N*self.K*ttm.y*exp(-pm['R']*ttm.y) * norm.cdf(-self.d2(t,pr_md=pm))
+        return self.N*self.K*ttm.y*np.exp(-pm['R']*ttm.y) * norm.cdf(-self.d2(t,pr_md=pm))
 
     def __repr__(self):
         return 'European Put Option'
