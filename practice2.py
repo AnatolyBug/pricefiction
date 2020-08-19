@@ -2,14 +2,13 @@ class Car:
     def __init__(self,a):
         self.a = a
 
-    @classmethod
-    def from_csv(cls, a,b):
-        print(a)
-        return cls(a+b)
+    def add(self, b):
+        return self.a + b
 
 class Mercedes(Car):
-
-    pass
+    def __init__(self,c):
+        self.c = c
+        super().__init__(c)
 
 m = Mercedes.from_csv(1,2)
 

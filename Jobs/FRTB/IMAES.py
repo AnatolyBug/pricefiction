@@ -42,16 +42,11 @@ class IMAES:
             for rf in rfs:
                 rfs_dict[rf]=BT
 
-            sim = md_ex.simulate(rfs_dict)
+            sim = md_ex.simulate(rfs_dict, drop=False)
             md_10day_ex = HistoricalMarketData(sim, t, ca)
             scen_dts = pd.Series(md_10day_ex.md['Date'].unique())
-            np.random.seed(4567)
-            rand = np.random.randint(len(scen_dts), size=scenarios)
-            rand_df = pd.DataFrame(rand, columns=['Scenario'])
-            rand_scen_df = pd.merge(rand_df, md_10day_ex.md, left_on=['Scenario'], right_index=True, how='left')
-            #a = sim[sim['Date'].isin(rand_scen_df['Date'])]
-            #a.to_csv(str(lh)+'.csv',index=False)
-            port_pr = base_portfolio.mtm(t, scenario=rand_scen_df['Date'], md=md_10day_ex,interm=True)
+            rand_scen = scen_dts.sample(n=scenarios, replace=True, random_state=4567)
+            port_pr = base_portfolio.mtm(t, scenario=rand_scen, md=md_10day_ex,interm=True)
             inter = base_portfolio.products[0].interm_res[j]
             inter.to_csv('Interm_res_Option'+str(lh)+'_ES.csv',index=False)
             returns = port_pr - base_prices
@@ -75,8 +70,7 @@ class IMAES:
                 es_scaled = es * coef
 
             all_res_lh = pd.DataFrame()
-            all_res_lh['RandomNumber'] = rand
-            all_res_lh['ScenarioDate'] = rand_scen_df['Date']
+            all_res_lh['ScenarioId'] = rand_scen.index
             all_res_lh['Price'] = port_pr
             all_res_lh['Return'] = returns
             all_res_lh['LH'] = lh
@@ -88,7 +82,7 @@ class IMAES:
         IMA_ES = np.sqrt((all_res['ES_Scaled'] ** 2).sum())
         all_res['IMA_ES'] = pd.Series([IMA_ES])
         if self.request['ExportToCSV']:
-            all_res.to_csv(r'Results\IMAESopt.csv', index=False)
+            all_res.to_csv(r'Results\IMAES.csv', index=False)
         if self.request['ShowPlots']:
             ret1 = all_res[all_res['LH']==10]['Return']
             ret2 = all_res[all_res['LH']==20]['Return']

@@ -44,7 +44,7 @@ class IMAESAltAge:
             for rf in rfs:
                 rfs_dict[rf]=BT
 
-            sim = md_ex.simulate(rfs_dict)
+            sim = md_ex.simulate(rfs_dict,  drop=False)
             md_10day_ex = HistoricalMarketData(sim, t, ca)
             scen_dts = pd.Series(md_10day_ex.md['Date'].unique())
             np.random.seed(4567)
@@ -56,9 +56,7 @@ class IMAESAltAge:
             #a.to_csv('Aged'+str(lh)+'.csv',index=False)
             port_pr = aged_port.mtm(t, scenario=rand_scen_df['Date'], md=md_10day_ex,interm=True)
             inter = aged_port.products[0].interm_res[0]
-            inter2 = aged_port.products[1].interm_res[0]
             inter.to_csv('Interm_res_Option' + str(lh) + '_Age.csv', index=False)
-            inter2.to_csv('Interm_res_Stock' + str(lh) + '_Age.csv', index=False)
             returns = port_pr - base_prices
             returns.sort_values(inplace=True)
             var_975 = pd.Series(returns).quantile(0.025)

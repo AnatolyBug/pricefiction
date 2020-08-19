@@ -34,7 +34,12 @@ class IMAESAlt:
         rand = np.random.randint(len(scen_dts), size=scenarios)
         rand_df = pd.DataFrame(rand, columns=['Scenario'])
         rand_scen_df = pd.merge(rand_df, md_ex_sim.md, left_on=['Scenario'], right_index=True, how='left')
-        port_pr = base_portfolio.mtm(t, scenario=rand_scen_df['Date'], md=md_ex_sim)
+        port_pr = base_portfolio.mtm(t, scenario=rand_scen_df['Date'], md=md_ex_sim, interm=True)
+
+        inter = base_portfolio.products[0].interm_res[0]
+        inter1 = base_portfolio.products[1].interm_res[0]
+        #inter.to_csv('Interm_res_Option_ES_Alt.csv', index=False)
+        #inter1.to_csv('Interm_res_Stock_ES_Alt.csv', index=False)
 
         returns = port_pr - base_prices
         returns.sort_values(inplace=True)

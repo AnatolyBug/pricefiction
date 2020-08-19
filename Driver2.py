@@ -5,8 +5,9 @@ request = {
     'CurveAttributes':r'Data\CurveAttributes.csv',
     'Portfolio':r'Data\PortfolioUH.csv',
     'ValuationDate':'20/12/2019',
-    'Scenarios':'200',
-    'Job':'IMAES',
+    #'Scenarios':'200',
+    'Scenarios':'1000',
+    'Job':'IMAESHestonAge',
     #'Job':'IMAES',
     'ExportToCSV':True,
     'ShowPlots':True

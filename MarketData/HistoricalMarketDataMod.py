@@ -1,14 +1,18 @@
 import pandas as pd
 import numpy as np
 from Helpers.HelpersMod import lin_interp, cols_to_int, TTM
+from .SimulationModels import *
+from .MarketDataMod import MarketData
 
-class HistoricalMarketData:
+class HistoricalMarketData(MarketData):
     def __init__(self, md, t, curve_att=None):
-        self.md = cols_to_int(md)
+        self.hist_md = cols_to_int(md)
         self.t = t
-        self.current_md = self.md[self.md['Date'] == t]
         self.ca = curve_att
         self.simulations = {}
+        super().__init__(md,t,curve_att)
+
+
 
     def simulate(self, riskfactors, base_dt=None, intersection=True, drop=True, overlap=False):
         if base_dt is None:
@@ -16,30 +20,27 @@ class HistoricalMarketData:
 
         dfs_rfs = []
         dfs_other = []
-        common_dates = self.md['Date']
+        rfs_other=[]
+        common_dates = self.hist_md['Date']
 
         dfs =[]
         _num_col = []
 
         #for name in riskfactors:
-        for name in self.md['Name'].unique():
+        for name in self.hist_md['Name'].unique():
             if drop:
                 if name not in list(riskfactors.keys()):
                     #If name is not in riskf and drop==True then continue
                     continue
 
-            md_mini = self.md[self.md['Name'] == name]
+            md_mini = self.hist_md[self.hist_md['Name'] == name]
             if name in list(riskfactors.keys()):
                 dfs_rfs.append(md_mini)
             else:
+                #rfs_other.append(name)
                 dfs_other.append(md_mini)
             if intersection:
                 common_dates = common_dates[common_dates.isin(md_mini['Date'])]
-
-        if not drop:
-            for df in dfs_other:
-                if intersection:
-                    df = df[df['Date'].isin(common_dates)]
 
 
         for md_mini in dfs_rfs:
@@ -90,7 +91,6 @@ class HistoricalMarketData:
         sim.reset_index(inplace=True)
 
         if intersection:
-            a=set(riskfactors.values())
             if len(set(riskfactors.values())) > 1:
                 common_dates2 = common_dates.copy()
                 for name in sim['Name'].unique():
@@ -99,36 +99,28 @@ class HistoricalMarketData:
 
                 sim = sim[sim['Date'].isin(common_dates2)]
 
+        dfs_other_sim = []
+        for df in dfs_other:
+            base_scenario = df[df['Date'] == base_dt]
+            df_non_sim=pd.DataFrame(sim['Date'],columns=['Date'])
+            df_non_sim['Name']=base_scenario['Name'].iloc[0]
+            for col in df.columns:
+                if isinstance(col,int):
+                    df_non_sim[col]=base_scenario[col].iloc[0]
+            dfs_other_sim.append(df_non_sim)
 
-        if dfs_other:
-            non_sim = pd.concat(dfs_other)
-            if intersection:
-                non_sim = non_sim[non_sim['Date'].isin(sim['Date'])]
+        if dfs_other_sim:
+            non_sim = pd.concat(dfs_other_sim)
             sim = sim.append(non_sim)
+
+
         sim.dropna(axis=0, how='all', inplace=True)
 
         return sim
 
-    def md_query(self, scen_dt, dtm=None,**kwargs):
-        #print(scen_dt)
-        scen_dt_df = pd.DataFrame(scen_dt,columns=['Date'])
-        scenario_df = pd.merge(scen_dt_df,self.md,on=['Date'],how='left')
-        d = pd.DataFrame()
-        for key, value in kwargs.items():
-            if value is not None:
-                single_name = scenario_df[scenario_df['Name']==value]
-                name = single_name['Name'].iloc[0]
-                type = self.ca[self.ca['Name']==name]['Type'].iloc[0]
-                single_name.reset_index(drop=True,inplace=True)
-                if type=='YieldCurve':
-                    d[key]=self.get_r(single_name,dtm)
-                elif type == 'Stock' or type =='ImpVol':
-                    d[key] = single_name[0]
-            else:
-                d[key] = 0
 
-        return d
 
+    '''
     def get_r(self, scenario, dtm):
         scenario.dropna(axis=1,how='all', inplace=True)
         num_col = []
@@ -138,11 +130,7 @@ class HistoricalMarketData:
             else:
                 num_col.append(col)
         return lin_interp(dtm, scenario[num_col])
+    '''
 
-    def DF(self,t,M,CCY,sc):
-        ttm = TTM(t, M)
-        df_r = self.md_query(sc,dtm=ttm.d,R=CCY)
-        comp = self.ca[self.ca['Name']==CCY]['Compounding'].iloc[0]
-        if comp == 'Continuous':
-            return np.exp(-df_r['R']*ttm.y)
+
 
