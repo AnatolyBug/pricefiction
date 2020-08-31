@@ -73,7 +73,7 @@ class MarketData:
             scen_lst = []
             for scenario in range(0,n_scen):
                 scen_lst.append(scenario)
-                sim = Heston(mu=0.5,rho=0.1,kappa=2,theta=0.15,xi = 0.2).simulate(s0,v0,horizon,s_stop,v_stop,_seed=seed)
+                sim = Heston(mu=0.1,rho=-0.3,kappa=2,theta=0.15,xi=0.2).simulate(s0,v0,horizon,s_stop,v_stop,_seed=seed)
                 S_sim.append(sim[0][horizon-1])
                 V_sim.append(sim[1][horizon-1])
                 if seed:

@@ -102,7 +102,7 @@ class HistoricalMarketData(MarketData):
         dfs_other_sim = []
         for df in dfs_other:
             base_scenario = df[df['Date'] == base_dt]
-            df_non_sim=pd.DataFrame(sim['Date'],columns=['Date'])
+            df_non_sim=pd.DataFrame(sim['Date'].unique(),columns=['Date'])
             df_non_sim['Name']=base_scenario['Name'].iloc[0]
             for col in df.columns:
                 if isinstance(col,int):

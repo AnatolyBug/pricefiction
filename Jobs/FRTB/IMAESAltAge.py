@@ -18,7 +18,7 @@ class IMAESAltAge:
         md = pd.read_csv(self.request['MarketData'])
         md['Date'] = pd.to_datetime(md['Date'], format='%d/%m/%Y')
         ca = pd.read_csv(self.request['CurveAttributes'])
-        lhs = ca['LH'].unique()
+        lhs = np.sort(ca['LH'].unique())
         md_ex = HistoricalMarketData(md, t, ca)
         K = 1500
         M = datetime.strptime('20/12/2020', '%d/%m/%Y')
@@ -51,12 +51,12 @@ class IMAESAltAge:
             rand = np.random.randint(len(scen_dts), size=scenarios)
             rand_df = pd.DataFrame(rand, columns=['Scenario'])
             rand_scen_df = pd.merge(rand_df, md_10day_ex.md, left_on=['Scenario'], right_index=True, how='left')
-            aged_port = base_portfolio.age_by_bd(lh)
+            aged_port = base_portfolio.age_by_bd(BT)
             #a = sim[sim['Date'].isin(rand_scen_df['Date'])]
             #a.to_csv('Aged'+str(lh)+'.csv',index=False)
             port_pr = aged_port.mtm(t, scenario=rand_scen_df['Date'], md=md_10day_ex,interm=True)
             inter = aged_port.products[0].interm_res[0]
-            inter.to_csv('Interm_res_Option' + str(lh) + '_Age.csv', index=False)
+            #inter.to_csv('Interm_res_Option' + str(lh) + '_Age.csv', index=False)
             returns = port_pr - base_prices
             returns.sort_values(inplace=True)
             var_975 = pd.Series(returns).quantile(0.025)

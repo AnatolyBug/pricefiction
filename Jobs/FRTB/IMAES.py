@@ -16,18 +16,21 @@ class IMAES:
         self.request = request
 
     def run(self):
-        #K = 1349.59
+        K = 1349.59
         scenarios = int(self.request['Scenarios'])
         BT = 10
         t = datetime.strptime(self.request['ValuationDate'], '%d/%m/%Y')
-        #M = datetime.strptime('20/12/2020', '%d/%m/%Y')
+        M = datetime.strptime('20/12/2020', '%d/%m/%Y')
         md = pd.read_csv(self.request['MarketData'])
         md['Date'] = pd.to_datetime(md['Date'], format='%d/%m/%Y')
         ca = pd.read_csv(self.request['CurveAttributes'])
-        lhs = ca['LH'].unique()
+        lhs = np.sort(ca['LH'].unique())
         md_ex = HistoricalMarketData(md, t, ca)
         base_portfolio = Portfolio.from_csv(self.request['Portfolio'])
         #base_portfolio = Portfolio(EuropeanCallOption(K, M, 'GOOG', 'USD', 'VIX'), Stock('GOOG', notional=0.5721),name='Base')
+        a = EQEuropeanCallOption('GOOG', K, M, 'USD', 'VIX')
+        A = a.theta(t,md=md_ex)
+        b = a.price(t,md=md_ex)
         base_pr = base_portfolio.mtm(t, scenario=pd.Series(t), md=md_ex)
         base_prices = pd.Series(list(base_pr) * scenarios)
         all_res = pd.DataFrame([[t]], columns=['ScenarioDate'])

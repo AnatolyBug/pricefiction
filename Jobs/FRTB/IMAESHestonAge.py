@@ -42,7 +42,7 @@ class IMAESHestonAge:
                                   'Scenarios':scenarios
                                   })
         aged_port = base_portfolio.age_by_bd(10)
-        port_pr = aged_port.mtm(t, scenario=sim.md['Date'].unique(), md=sim,interm=True)
+        port_pr = aged_port.mtm(t, scenario=pd.Series(sim.md['Date'].unique()), md=sim,interm=True)
         inter = aged_port.products[0].interm_res[0]
         returns = port_pr - base_prices
         returns.sort_values(inplace=True)
@@ -80,7 +80,7 @@ class IMAESHestonAge:
                                   })
 
         aged_port = base_portfolio.age_by_bd(10)
-        port_pr = aged_port.mtm(t, scenario=sim.md['Date'].unique(), md=sim, interm=True)
+        port_pr = aged_port.mtm(t, scenario=pd.Series(sim.md['Date'].unique()), md=sim, interm=True)
         inter = aged_port.products[0].interm_res[0]
         returns = port_pr - base_prices
         returns.sort_values(inplace=True)

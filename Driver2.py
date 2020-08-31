@@ -3,14 +3,12 @@ from Jobs import JobExecutioner as je
 request = {
     'MarketData':r'Data\MarketData.csv',
     'CurveAttributes':r'Data\CurveAttributes.csv',
-    'Portfolio':r'Data\PortfolioUH.csv',
+    'Portfolio':r'Data\PortfolioOpt.csv',
     'ValuationDate':'20/12/2019',
-    #'Scenarios':'200',
-    'Scenarios':'1000',
-    'Job':'IMAESHestonAge',
-    #'Job':'IMAES',
+    'Scenarios':'200',
+    'Job':'IMAESAltAge',
     'ExportToCSV':True,
-    'ShowPlots':True
+    'ShowPlots':False
 }
 
 je.Job().run(request)

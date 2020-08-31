@@ -69,7 +69,7 @@ class EQEuropeanCallOption(EuropeanEQOption):
         d2 = self.d2(t, pr_md=pm)
         p = self.N*pm['S']*np.exp(-pm['q']*ttm.y)*norm.cdf(d1) - self.N*self.K*np.exp(-pm['R']*ttm.y)*norm.cdf(d2)
         if interm:
-            pm['Scenario'] = sc
+            pm['Scenario'] = sc.reset_index(drop=True)
             pm['ValuationDate'] = t
             pm['TTM_d']=ttm.d
             pm['TTM_y'] = ttm.y
@@ -90,6 +90,15 @@ class EQEuropeanCallOption(EuropeanEQOption):
         ttm = TTM(t, self.M)
         pm = md.md_query(sc, ttm.d, R=self.CCY, S=self.U, q=self.DIV, v=self.VOL) if pr_md is None else pr_md
         return self.N*self.K*ttm.y*np.exp(-pm['R']*ttm.y)*norm.cdf(self.d2(t,pr_md=pm))
+
+    def theta(self,t, scenario=None, md=None, pr_md=None):
+        sc = pd.Series(t) if scenario is None else scenario
+        ttm = TTM(t, self.M)
+        pm = md.md_query(sc, ttm.d, R=self.CCY, S=self.U, q=self.DIV, v=self.VOL) if pr_md is None else pr_md
+        a = np.exp(-pm['q']*ttm.y)*norm.pdf(self.d1(t,pr_md=pm))*pm['S']*pm['v']/2/np.sqrt(ttm.y)
+        b = pm['R']*self.K*np.exp(-pm['R']*ttm.y)*norm.cdf(self.d2(t,pr_md=pm))
+        c = -pm['q']*pm['S']*np.exp(-pm['q']*ttm.y)*norm.cdf(self.d1(t,pr_md=pm))
+        return self.N*(a+b+c)
 
     def __repr__(self):
         return 'European Call Option'

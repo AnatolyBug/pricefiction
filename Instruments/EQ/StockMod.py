@@ -19,7 +19,7 @@ class Stock:
         sc = t if scenario is None else scenario
         pm = md.md_query(sc, S=self.U) if pr_md is None else pr_md
         if interm:
-            pm['Scenario'] = sc
+            pm['Scenario'] = sc.reset_index(drop=True)
             pm['ValuationDate'] = t
             self.interm_res.append(pm)
         return self.N*pm['S']

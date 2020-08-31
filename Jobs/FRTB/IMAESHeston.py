@@ -42,7 +42,7 @@ class IMAESHeston:
                                   'Scenarios':scenarios
                                   })
 
-        port_pr = base_portfolio.mtm(t, scenario=sim.md['Date'].unique(), md=sim,interm=True)
+        port_pr = base_portfolio.mtm(t, scenario=pd.Series(sim.md['Date'].unique()), md=sim,interm=True)
         inter = base_portfolio.products[0].interm_res[0]
         returns = port_pr - base_prices
         returns.sort_values(inplace=True)
@@ -79,7 +79,7 @@ class IMAESHeston:
                                   'S_stop':0
                                   })
 
-        port_pr = base_portfolio.mtm(t, scenario=sim.md['Date'].unique(), md=sim, interm=True)
+        port_pr = base_portfolio.mtm(t, scenario=pd.Series(sim.md['Date'].unique()), md=sim, interm=True)
         inter = base_portfolio.products[0].interm_res[1]
         returns = port_pr - base_prices
         returns.sort_values(inplace=True)
